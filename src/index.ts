@@ -62,6 +62,14 @@ const server = Bun.serve({
     }
 
     if (req.method === "GET" && url.pathname === "/metrics") {
+      const auth = req.headers.get("authorization");
+      if (auth !== `Bearer ${SECRET}`) {
+        log("error", "Unauthorized send attempt", {
+          ip: req.headers.get("x-forwarded-for"),
+        });
+        return new Response("Unauthorized", { status: 401 });
+      }
+
       return Response.json({ connectedClients: clients.size });
     }
 
