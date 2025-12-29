@@ -15,6 +15,14 @@ const COLORS = {
   cyan: "\x1b[36m",
 };
 
+function getDate() {
+  const now = new Date();
+  return {
+    month: now.getMonth(), //0 = Jan
+    day: now.getDate(),
+  };
+}
+
 function log(
   type: "info" | "warn" | "error" | "broadcast" | "connection",
   message: string,
@@ -103,6 +111,24 @@ const server = Bun.serve({
     open(ws) {
       clients.add(ws);
       log("connection", "Client connected", { clients: clients.size });
+
+      const { month, day } = getDate();
+      if (month === 0 && day === 1) {
+        const payload = {
+          type: "chat-message",
+          content: "Happy New Year from the Duels+ team!",
+          userId: "00000000-0000-0000-0000-000000000000",
+          ign: "System",
+        };
+        setTimeout(() => {
+          if (!clients.has(ws)) return;
+          ws.send(JSON.stringify(payload));
+          log("broadcast", "Message sent to clients", {
+            payload,
+            clients: clients.size,
+          });
+        }, 3000);
+      }
     },
     close(ws) {
       clients.delete(ws);
