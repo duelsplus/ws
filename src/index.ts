@@ -67,30 +67,7 @@ async function embed(payload: any) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        embeds: [
-          {
-            color: 0x5865f2,
-            fields: [
-              {
-                name: "Player",
-                value: `\`${String(payload?.ign)}\``,
-                inline: true,
-              },
-              {
-                name: "Type",
-                value: `\`${String(payload?.type)}\``,
-                inline: true,
-              },
-              {
-                name: "Content",
-                value: payload?.content
-                  ? `\`\`\`\n${String(payload?.content).slice(0, 1000)}\n\`\`\``
-                  : "```(empty)```",
-              },
-            ],
-            timestamp: new Date().toISOString(),
-          },
-        ],
+        content: `> ${payload?.isAdmin ? ":small_orange_diamond:" : ":small_blue_diamond:"} \`${String(payload?.ign)}\`: \`${String(payload?.content ?? "").slice(0, 200)}\``,
       }),
     });
   } catch (err) {
