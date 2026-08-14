@@ -71,6 +71,34 @@ function log(
   );
 }
 
+/*
+  Ported from @duelsplus/src/features/autoStats/StatsMessageBuilder.ts
+  spoiler: lots of if else
+*/
+function hypixelRank(player: Record<string, unknown> | null | undefined) {
+  if (!player) return "";
+  const prefix = player.prefix as string | undefined;
+  if (prefix) {
+    return `${prefix.replace(/§[0-9a-fk-or]/gi, "")} `;
+  }
+  const rank = player.rank as string | undefined;
+  if (rank === "YOUTUBER") return "[YOUTUBE] ";
+  if (rank === "STAFF") return "[ዞ] ";
+  const monthlyPackageRank = player.monthlyPackageRank as string | undefined;
+  const newPackageRank = player.newPackageRank as string | undefined;
+  const packageRank = player.packageRank as string | undefined;
+  if (monthlyPackageRank === "SUPERSTAR") return "[MVP++] ";
+  if (newPackageRank === "MVP_PLUS" || packageRank === "MVP_PLUS") {
+    return "[MVP+] ";
+  }
+  if (newPackageRank === "MVP" || packageRank === "MVP") return "[MVP] ";
+  if (newPackageRank === "VIP_PLUS" || packageRank === "VIP_PLUS") {
+    return "[VIP+] ";
+  }
+  if (newPackageRank === "VIP" || packageRank === "VIP") return "[VIP] ";
+  return "";
+}
+
 async function hypixelPlayer(uuid: string) {
   if (!uuid || uuid === "00000000-0000-0000-0000-000000000000") {
     return null;
@@ -108,7 +136,7 @@ async function embed(payload: any) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        content: `> ${payload?.isAdmin ? ":small_orange_diamond:" : ":small_blue_diamond:"} \`${String(payload?.ign)}\`: \`${String(payload?.content ?? "").slice(0, 200)}\``,
+        content: `> ${payload?.isAdmin ? ":small_orange_diamond:" : ":small_blue_diamond:"} \`${hypixelRank(payload?.player)}${String(payload?.ign)}\`: \`${String(payload?.content ?? "").slice(0, 200)}\``,
       }),
     });
   } catch (err) {
