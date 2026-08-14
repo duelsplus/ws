@@ -3,6 +3,17 @@ const SECRET = process.env.SECRET;
 
 if (!SECRET) throw new Error("SECRET env var is missing");
 
+type ChatPayload = {
+  type: "chat-message";
+  content: string;
+  userId: string;
+  ign: string;
+  uuid: string;
+  isAdmin: boolean;
+  isFlagged: boolean;
+  player?: Record<string, unknown> | null;
+};
+
 const clients = new Set<Bun.ServerWebSocket>();
 
 const COLORS = {
@@ -60,6 +71,36 @@ function log(
   );
 }
 
+async function hypixelPlayer(uuid: string) {
+  if (!uuid || uuid === "00000000-0000-0000-0000-000000000000") {
+    return null;
+  }
+  try {
+    const res = await fetch(
+      `https://api.venxm.uk/proxied/hypixel/player?uuid=${encodeURIComponent(uuid)}&apikeyless=true`,
+    );
+    if (!res.ok) {
+      log("warn", `Can't resolve Hypixel player (${res.status})`, {
+        uuid,
+      });
+      return null;
+    }
+    const data = (await res.json()) as {
+      success: boolean;
+      player?: Record<string, unknown>;
+    };
+    if (!data.success || !data.player) {
+      return null;
+    }
+    return data.player;
+  } catch {
+    log("warn", "Can't resolve Hypixel player :(", {
+      uuid,
+    });
+    return null;
+  }
+}
+
 async function embed(payload: any) {
   if (!process.env.NOTIFY_WEBHOOK) return;
   try {
@@ -106,7 +147,14 @@ const server = Bun.serve({
       }
 
       try {
-        const payload = await req.json();
+        const payload = (await req.json()) as ChatPayload; //i hate typescript it was easier in js
+        if (
+          payload.type === "chat-message" &&
+          payload.uuid &&
+          payload.ign !== "System"
+        ) {
+          payload.player = await hypixelPlayer(payload.uuid);
+        }
         const msg = JSON.stringify(payload);
         clients.forEach((ws) => ws.send(msg));
         log("broadcast", "Message sent to clients", {
