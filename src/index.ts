@@ -145,6 +145,7 @@ async function embed(payload: any) {
 }
 
 const server = Bun.serve({
+  hostname: "0.0.0.0",
   port: PORT,
   fetch: async (req, server) => {
     const url = new URL(req.url);
