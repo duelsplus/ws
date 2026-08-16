@@ -1,3 +1,5 @@
+import { redis } from "./redis";
+
 const PORT = Number(process.env.PORT ?? 8080);
 const SECRET = process.env.SECRET;
 
@@ -103,6 +105,18 @@ async function hypixelPlayer(uuid: string) {
   if (!uuid || uuid === "00000000-0000-0000-0000-000000000000") {
     return null;
   }
+  const cacheKey = `hypixel:player:${uuid}`;
+  try {
+    const cached = await redis.get<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return cached;
+    }
+  } catch (err) {
+    log("warn", "Read redis failed", {
+      uuid,
+      error: String(err),
+    });
+  }
   try {
     const res = await fetch(
       `https://api.venxm.uk/proxied/hypixel/player?uuid=${encodeURIComponent(uuid)}&apikeyless=true`,
@@ -119,6 +133,16 @@ async function hypixelPlayer(uuid: string) {
     };
     if (!data.success || !data.player) {
       return null;
+    }
+    try {
+      await redis.set(cacheKey, data.player, {
+        ex: 60 * 60,
+      });
+    } catch (err) {
+      log("warn", "Write redis failed", {
+        uuid,
+        error: String(err),
+      });
     }
     return data.player;
   } catch {
