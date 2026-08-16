@@ -130,7 +130,7 @@ async function hypixelPlayer(uuid: string) {
 }
 
 async function embed(payload: any) {
-  if (!process.env.NOTIFY_WEBHOOK) return;
+  if (!process.env.NOTIFY_WEBHOOK || payload?.type !== "chat-message") return;
   try {
     await fetch(process.env.NOTIFY_WEBHOOK!, {
       method: "POST",
