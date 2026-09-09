@@ -1,3 +1,4 @@
+import { emote } from "./emote";
 import { redis } from "./redis";
 
 const PORT = Number(process.env.PORT ?? 8080);
@@ -207,6 +208,12 @@ const server = Bun.serve({
           payload.ign !== "System"
         ) {
           payload.player = await hypixelPlayer(payload.uuid);
+        }
+        if (
+          payload.type === "chat-message" &&
+          typeof payload.content === "string"
+        ) {
+          payload.content = emote(payload.content);
         }
         const msg = JSON.stringify(payload);
         clients.forEach((ws) => ws.send(msg));
