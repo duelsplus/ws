@@ -155,7 +155,18 @@ async function hypixelPlayer(uuid: string) {
 }
 
 async function embed(payload: any) {
-  if (!process.env.NOTIFY_WEBHOOK || payload?.type !== "chat-message") return;
+  if (!process.env.NOTIFY_WEBHOOK) return;
+  if (payload?.type === "fakeban") {
+    await fetch(process.env.NOTIFY_WEBHOOK!, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        content: `> :speaking_head: \`${String(payload?.content)}\` was fakebanned by \`${String(payload?.ign)}\``,
+      }),
+    });
+    return;
+  }
+  if (payload?.type !== "chat-message") return;
   try {
     await fetch(process.env.NOTIFY_WEBHOOK!, {
       method: "POST",
